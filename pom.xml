@@ -86,4 +86,28 @@
             </plugins>
         </pluginManagement>
     </build>
+
+    <repositories>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/echocat/hugo-maven-plugin</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/echocat/hugo-maven-plugin</url>
+        </snapshotRepository>
+        <repository>
+            <id>github</id>
+            <url>https://maven.pkg.github.com/echocat/hugo-maven-plugin</url>
+        </repository>
+    </distributionManagement>
 </project>
