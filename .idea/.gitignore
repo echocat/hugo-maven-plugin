@@ -1,0 +1,15 @@
+/shelf/
+/workspace.xml
+/dataSources/
+/encodings.xml
+/dataSources.local.xml
+/httpRequests/
+/misc.xml
+/modules.xml
+/runConfigurations.xml
+/vcs.xml
+/compiler.xml
+/jarRepositories.xml
+/uiDesigner.xml
+/libraries
+/*.iml
