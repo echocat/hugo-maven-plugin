@@ -15,7 +15,7 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
       - name: Adjust version
-        run: mvn --batch-mode versions:set "-DnewVersion=${{ github.ref }}"
+        run: mvn --batch-mode versions:set "-DnewVersion=${{ github.event.release.tag_name }}"
       - name: Publish package
         run: mvn --batch-mode deploy
         env:
