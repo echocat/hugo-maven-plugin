@@ -17,7 +17,7 @@
             <plugin>
                 <groupId>org.echocat.maven.plugins</groupId>
                 <artifactId>hugo-maven-plugin</artifactId>
-                <version>0.1.0-SNAPSHOT</version>
+                <version>0.1.0</version>
                 <executions>
                     <execution>
                         <id>build</id>
@@ -25,6 +25,9 @@
                             <goal>build-multi</goal>
                         </goals>
                         <configuration>
+                            <!-- Select the directory `config` as base.
+                                 All files and directories below that will be used as
+                                 the actual site configuration. -->
                             <configBase>config</configBase>
                         </configuration>
                     </execution>
@@ -32,5 +35,12 @@
             </plugin>
         </plugins>
     </build>
+
+    <pluginRepositories>
+        <pluginRepository>
+            <id>github</id>
+            <url>https://public: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@maven.pkg.github.com/echocat/hugo-maven-plugin</url>
+        </pluginRepository>
+    </pluginRepositories>
 
 </project>
