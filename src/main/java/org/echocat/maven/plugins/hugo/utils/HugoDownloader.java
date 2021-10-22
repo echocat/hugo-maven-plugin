@@ -1,4 +1,4 @@
-package org.echocat.maven.plugins.hugo;
+package org.echocat.maven.plugins.hugo.utils;
 
 import static java.lang.String.format;
 import static java.nio.file.Files.createTempFile;
@@ -17,6 +17,7 @@ import javax.annotation.Nonnull;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
+import org.echocat.maven.plugins.hugo.model.Platform;
 
 public final class HugoDownloader {
 

@@ -1,0 +1,3 @@
+baseURL = 'https://echocat.org/hugo-maven-plugin/demo/foo'
+title = 'Foo demo Hugo Page'
+disableKinds = ['RSS', 'taxonomy', 'taxonomyTerm']

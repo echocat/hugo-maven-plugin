@@ -1,11 +1,11 @@
-package org.echocat.maven.plugins.hugo;
+package org.echocat.maven.plugins.hugo.utils;
 
 import static java.lang.ProcessBuilder.Redirect.PIPE;
 import static java.lang.String.format;
 import static java.nio.file.Files.isExecutable;
 import static java.util.Collections.unmodifiableList;
-import static org.echocat.maven.plugins.hugo.Hugo.Download.*;
-import static org.echocat.maven.plugins.hugo.HugoDownloader.hugoDownloader;
+import static org.echocat.maven.plugins.hugo.utils.Hugo.Download.*;
+import static org.echocat.maven.plugins.hugo.utils.HugoDownloader.hugoDownloader;
 import static org.echocat.maven.plugins.hugo.utils.InputStreamLogger.Level.error;
 import static org.echocat.maven.plugins.hugo.utils.InputStreamLogger.Level.info;
 import static org.echocat.maven.plugins.hugo.utils.ProcessLogger.processLogger;
@@ -21,7 +21,7 @@ import javax.annotation.Nullable;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
-import org.echocat.maven.plugins.hugo.utils.ProcessLogger;
+import org.echocat.maven.plugins.hugo.model.Platform;
 
 public final class Hugo {
 
@@ -33,10 +33,6 @@ public final class Hugo {
     @Nonnull
     private final Log log;
     @Nonnull
-    private final Path config;
-    @Nonnull
-    private final Path output;
-    @Nonnull
     private final Platform platform;
     @Nonnull
     private final String version;
@@ -47,8 +43,6 @@ public final class Hugo {
 
     private Hugo(@Nonnull Builder builder) {
         log = builder.log.orElseThrow(() -> new NullPointerException("No log provided."));
-        config = builder.config.orElseThrow(() -> new NullPointerException("No config provided."));
-        output = builder.output.orElseThrow(() -> new NullPointerException("No output provided."));
         platform = builder.platform.orElseThrow(() -> new NullPointerException("No platform provided."));
         version = builder.version.orElseThrow(() -> new NullPointerException("No version provided."));
         download = builder.download.orElse(onDemand);
@@ -136,16 +130,6 @@ public final class Hugo {
     }
 
     @Nonnull
-    public Path config() {
-        return config;
-    }
-
-    @Nonnull
-    public Path output() {
-        return output;
-    }
-
-    @Nonnull
     public Platform platform() {
         return platform;
     }
@@ -165,10 +149,6 @@ public final class Hugo {
         @Nonnull
         private Optional<Log> log = Optional.empty();
         @Nonnull
-        private Optional<Path> config = Optional.empty();
-        @Nonnull
-        private Optional<Path> output = Optional.empty();
-        @Nonnull
         private Optional<Platform> platform = Optional.empty();
         @Nonnull
         private Optional<String> version = Optional.empty();
@@ -178,18 +158,6 @@ public final class Hugo {
         @Nonnull
         public Builder withLog(@Nonnull Log v) {
             log = Optional.of(v);
-            return this;
-        }
-
-        @Nonnull
-        public Builder withConfig(@Nonnull Path v) {
-            config = Optional.of(v);
-            return this;
-        }
-
-        @Nonnull
-        public Builder withOutput(@Nonnull Path v) {
-            output = Optional.of(v);
             return this;
         }
 

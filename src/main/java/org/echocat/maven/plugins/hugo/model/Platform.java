@@ -1,11 +1,11 @@
-package org.echocat.maven.plugins.hugo;
+package org.echocat.maven.plugins.hugo.model;
 
 import static java.lang.String.format;
 import static java.lang.System.getProperty;
 import static java.util.Optional.empty;
-import static org.echocat.maven.plugins.hugo.Architecture.*;
-import static org.echocat.maven.plugins.hugo.Packaging.tarGz;
-import static org.echocat.maven.plugins.hugo.Packaging.zip;
+import static org.echocat.maven.plugins.hugo.model.Architecture.*;
+import static org.echocat.maven.plugins.hugo.model.Packaging.tarGz;
+import static org.echocat.maven.plugins.hugo.model.Packaging.zip;
 
 import java.net.MalformedURLException;
 import java.net.URL;

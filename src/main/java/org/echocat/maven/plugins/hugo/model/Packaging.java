@@ -1,4 +1,4 @@
-package org.echocat.maven.plugins.hugo;
+package org.echocat.maven.plugins.hugo.model;
 
 import static java.lang.String.format;
 import static java.nio.file.Files.newInputStream;

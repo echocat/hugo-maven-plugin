@@ -4,8 +4,8 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Optional.ofNullable;
-import static org.echocat.maven.plugins.hugo.Hugo.Download.onDemand;
-import static org.echocat.maven.plugins.hugo.Hugo.hugo;
+import static org.echocat.maven.plugins.hugo.utils.Hugo.Download.onDemand;
+import static org.echocat.maven.plugins.hugo.model.Platform.platform;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -21,9 +21,10 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
-import org.echocat.maven.plugins.hugo.Hugo.Download;
+import org.echocat.maven.plugins.hugo.utils.Hugo;
+import org.echocat.maven.plugins.hugo.utils.Hugo.Download;
 
-public abstract class BaseHugoMojo extends AbstractMojo {
+public abstract class BaseMojo extends AbstractMojo {
 
     private static final String DEFAULT_VERSION = "0.88.1";
 
@@ -50,7 +51,7 @@ public abstract class BaseHugoMojo extends AbstractMojo {
     @Parameter(
         name = "workingDirectory",
         property = "hugo.workingDirectory",
-        defaultValue = "${baseDir}"
+        defaultValue = "${project.basedir}"
     )
     private File workingDirectory;
 
@@ -63,17 +64,26 @@ public abstract class BaseHugoMojo extends AbstractMojo {
         name = "outputIncludes"
     )
     private List<String> outputIncludes;
+
     @Parameter(
         name = "outputExcludes"
     )
     private List<String> outputExcludes;
 
+    @Parameter(
+        name = "environment",
+        property = "hugo.environment"
+    )
+    private String environment;
+
     @Nonnull
-    protected Hugo.Builder hugoBuilder() throws MojoFailureException {
-        return hugo()
+    protected Hugo hugo() throws MojoFailureException {
+        return Hugo.hugo()
             .withLog(log())
             .withVersion(version())
             .withDownload(download())
+            .withPlatform(platform())
+            .build()
             ;
     }
 
@@ -116,18 +126,31 @@ public abstract class BaseHugoMojo extends AbstractMojo {
     @Nonnull
     protected List<String> arguments(@Nonnull List<String> input) {
         final List<String> result = new ArrayList<>(input);
+
+        environment().ifPresent(v -> {
+            result.add("--environment");
+            result.add(v);
+        });
+
         ofNullable(additionalArguments)
             .ifPresent(result::addAll);
         return unmodifiableList(result);
     }
 
     @Nonnull
-    protected Resource toOutputResource(@Nonnull Path path) {
+    protected Resource toOutputResource(@Nonnull Path path, @Nonnull String target) {
         final Resource result = new Resource();
+        result.setTargetPath(target);
         result.setDirectory(path.toString());
         result.setIncludes(outputIncludes);
         result.setExcludes(outputExcludes);
         return result;
     }
+
+    @Nonnull
+    protected Optional<String> environment() {
+        return ofNullable(environment);
+    }
+
 
 }

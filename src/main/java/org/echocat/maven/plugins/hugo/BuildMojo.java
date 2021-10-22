@@ -2,7 +2,8 @@ package org.echocat.maven.plugins.hugo;
 
 import static java.util.Optional.ofNullable;
 import static org.apache.maven.plugins.annotations.LifecyclePhase.GENERATE_RESOURCES;
-import static org.echocat.maven.plugins.hugo.Platform.platform;
+import static org.echocat.maven.plugins.hugo.model.Config.configOf;
+import static org.echocat.maven.plugins.hugo.model.ConfigAndOutput.configAndOutputOf;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -12,22 +13,26 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.echocat.maven.plugins.hugo.model.Config;
+import org.echocat.maven.plugins.hugo.model.ConfigAndOutput;
 
 @Mojo(
     name = "build",
     defaultPhase = GENERATE_RESOURCES,
     requiresProject = false
 )
-public class BuildMojo extends BaseHugoMojo {
+public class BuildMojo extends BaseBuildMojo {
 
     @Parameter(
         name = "config",
+        property = "hugo.config",
         required = true
     )
     private File config;
 
     @Parameter(
         name = "output",
+        property = "hugo.output",
         defaultValue = "${project.build.directory}/generated-resources/hugo",
         required = true
     )
@@ -35,38 +40,23 @@ public class BuildMojo extends BaseHugoMojo {
 
     @Override
     public void execute() throws MojoExecutionException, MojoFailureException {
-        final Path output = output();
+        execute(configAndOutput(), resourcesTargetPath());
+    }
 
-        hugo().execute(arguments(
-            "--configDir", config().toString(),
-            "--destination", output.toString()
-        ), workingDirectory());
-
-        project().ifPresent(v ->
-            v.addResource(toOutputResource(output))
+    @Nonnull
+    protected ConfigAndOutput configAndOutput() throws MojoFailureException {
+        return configAndOutputOf(
+            config(),
+            output()
         );
     }
 
     @Nonnull
-    protected Hugo hugo() throws MojoFailureException {
-        return hugoBuilder()
-            .build();
-    }
-
-    @Nonnull
-    protected Hugo.Builder hugoBuilder() throws MojoFailureException {
-        return super.hugoBuilder()
-            .withConfig(config())
-            .withOutput(output())
-            .withPlatform(platform())
-            ;
-    }
-
-    @Nonnull
-    protected Path config() throws MojoFailureException {
-        return ofNullable(config)
+    protected Config config() throws MojoFailureException {
+        final Path path = ofNullable(config)
             .map(File::toPath)
             .orElseThrow(() -> new MojoFailureException("config property missing."));
+        return configOf(path);
     }
 
     @Nonnull

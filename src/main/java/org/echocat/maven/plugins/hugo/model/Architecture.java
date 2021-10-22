@@ -1,4 +1,4 @@
-package org.echocat.maven.plugins.hugo;
+package org.echocat.maven.plugins.hugo.model;
 
 import static java.lang.System.getProperty;
 import static java.util.Collections.unmodifiableSet;
