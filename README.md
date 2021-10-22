@@ -66,6 +66,8 @@ Plugin that wraps hugo build processes into Maven executions.
         <!-- [...] -->
     </build>
     ```
+   
+    ℹ️ See [packages for available versions](https://github.com/echocat/hugo-maven-plugin/packages/1057478).
 
 3. Now you can run `mvn package`
 
