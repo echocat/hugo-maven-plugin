@@ -30,7 +30,7 @@ Plugin that wraps hugo build processes into Maven executions.
     <pluginRepositories>
         <pluginRepository>
             <id>github</id>
-            <url>https://public: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@maven.pkg.github.com/echocat/hugo-maven-plugin</url>
+            <url>https://public:&#103;hp_rVZo3pyZCjyjB2wkMt7Rsl2JLWZUbp2ipBlD@maven.pkg.github.com/echocat/hugo-maven-plugin</url>
         </pluginRepository>
     </pluginRepositories>
     ```
