@@ -1,55 +1,51 @@
 package org.echocat.maven.plugins.hugo.model;
 
 import static java.lang.System.getProperty;
-import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
 import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Locale;
 import java.util.Optional;
-import java.util.Set;
+import java.util.regex.Pattern;
+
 import javax.annotation.Nonnull;
 
 public enum Architecture {
-    i386("x86", "i386", "i486", "i586", "i686"),
-    amd64("amd64", "x86_64"),
-    arm64("aarch64", "arm64");
+    x64("^(x8664|amd64|ia32e|em64t|x64)$"),
+    x32("^(x8632|x86|i[3-6]86|ia32|x32)$"),
+    arm32("^(arm|arm32)$"),
+    arm64("^(aarch64|arm64)$"),
+    ;
 
-    private final Set<String> patternCandidates;
+    private final Pattern pattern;
 
-    Architecture(@Nonnull String... patternCandidates) {
-        this.patternCandidates = unmodifiableSet(new HashSet<>(Arrays.asList(patternCandidates)));
-    }
-
-    @Nonnull
-    public Set<String> patternCandidates() {
-        return patternCandidates;
+    Architecture(@Nonnull String regex) {
+        this.pattern = Pattern.compile(regex);
     }
 
     public boolean matchesArchString(@Nonnull String what) {
-        final String target = requireNonNull(what).toLowerCase();
-        for (final String patternCandidate : patternCandidates) {
-            if (target.startsWith(patternCandidate)) {
-                return true;
-            }
-        }
-        return false;
+        String normalizedWhat = requireNonNull(what).toLowerCase(Locale.US).replaceAll("[^a-z0-9]+", "");
+        return pattern.matcher(normalizedWhat).matches();
     }
 
     @Nonnull
     public static Optional<Architecture> findArchitecture() {
-        final String arch = getProperty("os.arch", "unknown");
+        final String arch = ArchNameProvider.get();
         return findArchitectureMatchesString(arch);
     }
 
     @Nonnull
     public static Optional<Architecture> findArchitectureMatchesString(@Nonnull String what) {
-        for (final Architecture candidate : values()) {
-            if (candidate.matchesArchString(what)) {
-                return Optional.of(candidate);
-            }
+        return Arrays
+            .stream(values())
+            .filter(architecture -> architecture.matchesArchString(what))
+            .findFirst();
+    }
+
+    static class ArchNameProvider {
+        static String get() {
+            return getProperty("os.arch", "unknown");
         }
-        return Optional.empty();
     }
 
 }

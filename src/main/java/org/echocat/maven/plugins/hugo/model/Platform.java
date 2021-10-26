@@ -19,15 +19,14 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugin.MojoFailureException;
 
 public enum Platform {
-    linuxI386(i386, "Linux-32bit", tarGz, false),
-    linuxAmd64(amd64, "Linux-64bit", tarGz, true),
-    linuxArm64(arm64, "Linux-ARM64", tarGz, false),
-    macosI386(i386, "macOS-32bit", tarGz, false),
-    macosAmd64(amd64, "macOS-64bit", tarGz, true),
-    macosArm64(arm64, "macOS-ARM64", tarGz, true),
-    windowsI386(i386, "Windows-32bit", zip, false, ".exe"),
-    windowsAmd64(amd64, "Windows-64bit", zip, true, ".exe"),
-    windowsArm64(arm64, "Windows-ARM", zip, false, ".exe"),
+    linux_x32(x32, "Linux-32bit", tarGz, false),
+    linux_x64(x64, "Linux-64bit", tarGz, true),
+    linux_arm64(arm64, "Linux-ARM64", tarGz, false),
+    macos_x64(x64, "macOS-64bit", tarGz, true),
+    macos_arm64(arm64, "macOS-ARM64", tarGz, true),
+    windows_x32(x32, "Windows-32bit", zip, false, ".exe"),
+    windows_x64(x64, "Windows-64bit", zip, true, ".exe"),
+    windows_arm64(arm64, "Windows-ARM", zip, false, ".exe"),
     ;
 
     private final static Optional<Platform> actual = detect();
@@ -176,12 +175,12 @@ public enum Platform {
 
     private static Optional<Platform> detectWindows(@Nonnull Architecture arch) {
         switch (arch) {
-            case i386:
-                return Optional.of(windowsI386);
-            case amd64:
-                return Optional.of(windowsAmd64);
+            case x32:
+                return Optional.of(windows_x32);
+            case x64:
+                return Optional.of(windows_x64);
             case arm64:
-                return Optional.of(windowsArm64);
+                return Optional.of(windows_arm64);
             default:
                 return empty();
         }
@@ -189,12 +188,12 @@ public enum Platform {
 
     private static Optional<Platform> detectLinux(@Nonnull Architecture arch) {
         switch (arch) {
-            case i386:
-                return Optional.of(linuxI386);
-            case amd64:
-                return Optional.of(linuxAmd64);
+            case x32:
+                return Optional.of(linux_x32);
+            case x64:
+                return Optional.of(linux_x64);
             case arm64:
-                return Optional.of(linuxArm64);
+                return Optional.of(linux_arm64);
             default:
                 return empty();
         }
@@ -202,16 +201,13 @@ public enum Platform {
 
     private static Optional<Platform> detectMacOs(@Nonnull Architecture arch) {
         switch (arch) {
-            case i386:
-                return Optional.of(macosI386);
-            case amd64:
-                return Optional.of(macosAmd64);
+            case x64:
+                return Optional.of(macos_x64);
             case arm64:
-                return Optional.of(macosArm64);
+                return Optional.of(macos_arm64);
             default:
                 return empty();
         }
     }
-
 
 }

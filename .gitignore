@@ -1,2 +1,10 @@
 /target
 /var
+
+# macOS
+.DS_Store
+
+# JDT LS
+.classpath
+.project
+.settings
