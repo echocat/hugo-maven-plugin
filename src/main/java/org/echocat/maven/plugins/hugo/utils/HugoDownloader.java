@@ -1,6 +1,7 @@
 package org.echocat.maven.plugins.hugo.utils;
 
 import static java.lang.String.format;
+import static java.lang.System.getProperty;
 import static java.nio.file.Files.createTempFile;
 import static java.nio.file.Files.newOutputStream;
 import static org.echocat.maven.plugins.hugo.utils.FileSystems.*;
@@ -97,7 +98,13 @@ public final class HugoDownloader {
                 }
             }
         } catch (IOException e) {
-            throw new MojoExecutionException(format("Cannot download hugo from %s.", url), e);
+            throw new MojoExecutionException(
+                format(
+                    "Cannot download hugo from %s. [os.name: %s, arch.name: %s]",
+                    url,
+                    getProperty("os.name", "unknown"),
+                    getProperty("os.arch", "unknown")
+                ), e);
         }
     }
 
