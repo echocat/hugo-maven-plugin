@@ -29,12 +29,11 @@ Plugin that wraps hugo build processes into Maven executions.
     ```xml
     <pluginRepositories>
         <pluginRepository>
-            <id>github</id>
-            <url>https://public:&#103;hp_rVZo3pyZCjyjB2wkMt7Rsl2JLWZUbp2ipBlD@maven.pkg.github.com/echocat/hugo-maven-plugin</url>
+            <id>echocat</id>
+            <url>https://packages.echocat.org/maven</url>
         </pluginRepository>
     </pluginRepositories>
     ```
-    > ℹ️ We need this strange approach because (with this PAT) because of a [strange behaviour of the GitHub Maven Repositories](https://github.community/t/download-from-github-package-registry-without-authentication/14407/111). Sorry for that. 🤦
 
 2. Bind the plugin to your build process:
     ```xml
