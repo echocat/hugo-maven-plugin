@@ -17,6 +17,14 @@
         <url>https://echocat.org</url>
     </organization>
 
+    <developers>
+        <developer>
+            <id>gregor.noczinski</id>
+            <name>Gregor Noczinski</name>
+            <email>gregor@noczsinki.eu</email>
+        </developer>
+    </developers>
+
     <issueManagement>
         <url>https://github.com/echocat/hugo-maven-plugin/issues</url>
         <system>GitHub</system>
