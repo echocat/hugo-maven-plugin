@@ -25,50 +25,57 @@ Plugin that wraps hugo build processes into Maven executions.
 
 ## Getting started
 
-1. Add the repository to your `pom.xml`:
-    ```xml
-    <pluginRepositories>
-        <pluginRepository>
-            <id>echocat</id>
-            <url>https://packages.echocat.org/maven</url>
-        </pluginRepository>
-    </pluginRepositories>
-    ```
+### 1. Register our repository (optional)
 
-2. Bind the plugin to your build process:
-    ```xml
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.echocat.maven.plugins</groupId>
-                <artifactId>hugo-maven-plugin</artifactId>
-                <version>LATEST_VERSION</version>
-                <executions>
-                    <execution>
-                        <!-- Give this execution a name,
-                             build might be a good one. -->
-                        <id>build</id>
-                        <goals>
-                            <!-- `build` is the default goal.
-                                 See below. -->
-                            <goal>build</goal>
-                        </goals>
-                        <configuration>
-                            <!-- Configuration to pick up -->
-                            <config>config.toml</config>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- [...] -->
-        </plugins>
-        <!-- [...] -->
-    </build>
-    ```
-   
-    ℹ️ See [packages for available versions](https://github.com/echocat/hugo-maven-plugin/packages/1057478).
+You can directly register our repository if you want always the latest version. The central can be versions behind.
 
-3. Now you can run `mvn package`
+```xml
+<pluginRepositories>
+    <pluginRepository>
+        <id>echocat</id>
+        <url>https://packages.echocat.org/maven</url>
+    </pluginRepository>
+</pluginRepositories>
+```
+
+### 2. Pick your version
+
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/org.echocat.maven.plugins/hugo-maven-plugin/badge.svg)](https://maven-badges.herokuapp.com/maven-central/org.echocat.maven.plugins/hugo-maven-plugin)
+
+Find your desired version you want to install (usually the latest one) [by looking it up in our repository](https://github.com/echocat/hugo-maven-plugin/packages/1057478/) or directly at [the Maven Central](http://search.maven.org/#search|ga|1|g:org.echocat.maven.plugins%20AND%20a:hugo-maven-plugin).
+
+### 2. Bind the plugin to your build process:
+ ```xml
+ <build>
+     <plugins>
+         <plugin>
+             <groupId>org.echocat.maven.plugins</groupId>
+             <artifactId>hugo-maven-plugin</artifactId>
+             <version>LATEST_VERSION</version>
+             <executions>
+                 <execution>
+                     <!-- Give this execution a name,
+                          build might be a good one. -->
+                     <id>build</id>
+                     <goals>
+                         <!-- `build` is the default goal.
+                              See below. -->
+                         <goal>build</goal>
+                     </goals>
+                     <configuration>
+                         <!-- Configuration to pick up -->
+                         <config>config.toml</config>
+                     </configuration>
+                 </execution>
+             </executions>
+         </plugin>
+         <!-- [...] -->
+     </plugins>
+     <!-- [...] -->
+ </build>
+ ```
+
+### 4. Now you can run `mvn package`
 
 Now you should have all those resources on the one hand inside `target/generated-resources/hugo/...` but also in your resulting JAR and by this available in your classpath at `public/...`.
 
