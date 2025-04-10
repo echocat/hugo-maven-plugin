@@ -10,6 +10,7 @@ import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.echocat.maven.plugins.hugo.model.Config;
 import org.echocat.maven.plugins.hugo.model.ConfigAndOutput;
+import org.echocat.maven.plugins.hugo.utils.FailureException;
 
 public abstract class BaseBuildMojo extends BaseMojo {
 
@@ -23,19 +24,25 @@ public abstract class BaseBuildMojo extends BaseMojo {
         @Nonnull ConfigAndOutput configAndOutput,
         @Nonnull String targetPath
     ) throws MojoExecutionException, MojoFailureException {
-        final Config config = configAndOutput.config();
-        final Path output = configAndOutput.output();
+        try {
+            final Config config = configAndOutput.config();
+            final Path output = configAndOutput.output();
 
-        hugo().execute(arguments(
-            config.parameterName(), config.path().toString(),
-            "--destination", output.toString()
-        ), workingDirectory());
+            hugo().execute(arguments(
+                config.parameterName(), config.path().toString(),
+                "--destination", output.toString()
+            ), workingDirectory());
 
-        log().info(""); // empty finish line
+            log().info(""); // empty finish line
 
-        project().ifPresent(v ->
-            v.addResource(toOutputResource(output, targetPath))
-        );
+            project().ifPresent(v ->
+                v.addResource(toOutputResource(output, targetPath))
+            );
+        } catch (FailureException e) {
+            throw new MojoFailureException(e.getMessage(), e);
+        } catch (RuntimeException e) {
+            throw new MojoExecutionException(e.getMessage(), e);
+        }
     }
 
     @Nonnull
