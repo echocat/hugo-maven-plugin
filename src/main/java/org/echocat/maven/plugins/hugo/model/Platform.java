@@ -6,28 +6,94 @@ import static java.util.Optional.empty;
 import static org.echocat.maven.plugins.hugo.model.Architecture.*;
 import static org.echocat.maven.plugins.hugo.model.Packaging.tarGz;
 import static org.echocat.maven.plugins.hugo.model.Packaging.zip;
+import static org.echocat.maven.plugins.hugo.model.Versions.*;
 
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+import java.util.TreeSet;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
+import com.github.zafarkhaja.semver.Version;
+import org.echocat.maven.plugins.hugo.utils.FailureException;
 
 public enum Platform {
-    linux_x32(x32, "Linux-32bit", tarGz, false),
-    linux_x64(x64, "Linux-64bit", tarGz, true),
-    linux_arm64(arm64, "Linux-ARM64", tarGz, false),
-    macos_x64(x64, "macOS-64bit", tarGz, true),
-    macos_arm64(arm64, "macOS-ARM64", tarGz, true),
-    windows_x32(x32, "Windows-32bit", zip, false, ".exe"),
-    windows_x64(x64, "Windows-64bit", zip, true, ".exe"),
-    windows_arm64(arm64, "Windows-ARM", zip, false, ".exe"),
+    linux_x86(x86, tarGz, false,
+        new Vd(version0x54x0, "Linux-32bit"),
+        new Vd(version0x95x0)
+    ),
+    linux_amd64(amd64, tarGz, true,
+        new Vd(version0x54x0, "Linux-64bit"),
+        new Vd(version0x103x0, "linux-amd64")
+    ),
+    linux_arm64(arm64, tarGz, false,
+        new Vd(version0x54x0, "Linux-ARM64"),
+        new Vd(version0x103x0, "linux-arm64")
+    ),
+    macos_x86(x86, tarGz, false,
+        new Vd(version0x54x0, "macOS-32bit"),
+        new Vd(Version.of(0, 75, 0))
+    ),
+    macos_amd64(amd64, tarGz, true,
+        new Vd(version0x54x0, "macOS-64bit"),
+        new Vd(version0x102x0, "macOS-universal"),
+        new Vd(version0x103x0, "darwin-universal")
+    ),
+    macos_arm64(arm64, tarGz, true,
+        new Vd(Version.of(0, 81, 0), "macOS-ARM64", false),
+        new Vd(version0x102x0, "macOS-universal"),
+        new Vd(version0x103x0, "darwin-universal")
+    ),
+    windows_x86(x86, zip, false, ".exe",
+        new Vd(version0x54x0, "Windows-32bit"),
+        new Vd(version0x95x0)
+    ),
+    windows_amd64(amd64, zip, true, ".exe",
+        new Vd(version0x54x0, "Windows-64bit"),
+        new Vd(version0x103x0, "windows-amd64")
+    ),
+    windows_arm32(arm32, zip, false, ".exe",
+        new Vd(Version.of(0, 85, 0), "Windows-ARM"),
+        new Vd(version0x101x0)
+    ),
+    windows_arm64(arm64, zip, false, ".exe",
+        new Vd(Version.of(0, 89, 0), "Windows-ARM64"),
+        new Vd(version0x103x0, "windows-arm64")
+    ),
     ;
+
+    private static class Vd implements Comparable<Vd> {
+        @Nonnull
+        private final Version fromVersion;
+        @Nonnull
+        private final Optional<String> platformSuffix;
+        @Nonnull
+        private final Optional<Boolean> extendedSupported;
+
+        private Vd(@Nonnull Version fromVersion, @Nullable String platformSuffix, @Nullable Boolean extendedSupported) {
+            this.fromVersion = fromVersion;
+            this.platformSuffix = Optional.ofNullable(platformSuffix);
+            this.extendedSupported = Optional.ofNullable(extendedSupported);
+        }
+
+        private Vd(@Nonnull Version fromVersion, @Nullable String platformSuffix) {
+            this(fromVersion, platformSuffix, null);
+        }
+
+        private Vd(@Nonnull Version fromVersion) {
+            this(fromVersion, null);
+        }
+
+        @Override
+        public int compareTo(Vd o) {
+            return fromVersion.compareTo(o.fromVersion);
+        }
+    }
 
     private final static Optional<Platform> actual = detect();
 
@@ -37,15 +103,15 @@ public enum Platform {
     }
 
     @Nonnull
-    public static Platform platform() throws MojoFailureException {
+    public static Platform platform() throws FailureException {
         return tryPlatform()
-            .orElseThrow(() -> new MojoFailureException("Unsupported platform/operating-system/architecture."));
+            .orElseThrow(() -> new FailureException("Unsupported platform/operating-system/architecture."));
     }
 
     @Nonnull
     private final Architecture architecture;
     @Nonnull
-    private final String platformSuffix;
+    private final Set<Vd> vds;
     @Nonnull
     private final Packaging packaging;
     @Nonnull
@@ -55,25 +121,25 @@ public enum Platform {
 
     Platform(
         @Nonnull Architecture architecture,
-        @Nonnull String platformSuffix,
         @Nonnull Packaging packaging,
-        boolean extendedSupported
+        boolean extendedSupported,
+        Vd... vds
     ) {
-        this(architecture, platformSuffix, packaging, extendedSupported, null);
+        this(architecture, packaging, extendedSupported, null, vds);
     }
 
     Platform(
         @Nonnull Architecture architecture,
-        @Nonnull String platformSuffix,
         @Nonnull Packaging packaging,
         boolean extendedSupported,
-        @Nullable String executableExtension
+        @Nullable String executableExtension,
+        Vd... vds
     ) {
         this.architecture = architecture;
-        this.platformSuffix = platformSuffix;
         this.packaging = packaging;
         this.extendedSupported = extendedSupported;
         this.executableExtension = Optional.ofNullable(executableExtension);
+        this.vds = new TreeSet<>(Arrays.asList(vds));
     }
 
     @Nonnull
@@ -82,8 +148,14 @@ public enum Platform {
     }
 
     @Nonnull
-    public String platformSuffix() {
-        return platformSuffix;
+    public Optional<String> platformSuffix(@Nonnull Version version) {
+        Optional<String> result = empty();
+        for (final Vd vd : vds) {
+            if (vd.fromVersion.isLowerThanOrEquivalentTo(version)) {
+                result = vd.platformSuffix;
+            }
+        }
+        return result;
     }
 
     @Nonnull
@@ -91,8 +163,14 @@ public enum Platform {
         return packaging;
     }
 
-    public boolean extendedSupported() {
-        return extendedSupported;
+    public boolean extendedSupported(@Nonnull Version version) {
+        boolean result = extendedSupported;
+        for (final Vd vd : vds) {
+            if (vd.fromVersion.isLowerThanOrEquivalentTo(version) && vd.extendedSupported.isPresent()) {
+                result = vd.extendedSupported.get();
+            }
+        }
+        return result;
     }
 
     @Nonnull
@@ -101,7 +179,7 @@ public enum Platform {
     }
 
     @Nonnull
-    public Path hugoExecutable(@Nonnull String version) {
+    public Path hugoExecutable(@Nonnull Version version) {
         return hugoExecutableDirectory(version)
             .resolve(hugoExecutableFileName());
     }
@@ -113,7 +191,7 @@ public enum Platform {
     }
 
     @Nonnull
-    private Path hugoExecutableDirectory(@Nonnull String version) {
+    private Path hugoExecutableDirectory(@Nonnull Version version) {
         return tempDirectory()
             .resolve("hugo_cache")
             .resolve("bin")
@@ -126,27 +204,32 @@ public enum Platform {
     }
 
     @Nonnull
-    public URL packageDownloadUrlFor(@Nonnull String version) throws MojoExecutionException {
-        try {
-            return new URL(format("https://github.com/gohugoio/hugo/releases/download/v%s/%s", version, downloadFileNameFor(version)));
-        } catch (MalformedURLException e) {
-            throw new MojoExecutionException(format("Cannot construct valid URL to download hugo in version '%s', for '%s'.", version, this));
-        }
+    public Optional<URL> packageDownloadUrlFor(@Nonnull Version version) throws IllegalStateException {
+        return downloadFileNameFor(version).map(downloadFileName -> {
+            try {
+                return new URL(format("https://github.com/gohugoio/hugo/releases/download/v%s/%s", version, downloadFileName));
+            } catch (MalformedURLException e) {
+                throw new IllegalStateException(format("Cannot construct valid URL to download hugo in version '%s', for '%s'.", version, this));
+            }
+        });
     }
 
     @Nonnull
-    private String downloadFileNameFor(@Nonnull String version) {
-        final StringBuilder sb = new StringBuilder();
-        sb.append("hugo_");
-        if (extendedSupported()) {
-            sb.append("extended_");
-        }
-        sb.append(version)
-            .append("_")
-            .append(platformSuffix())
-            .append(packaging().extension());
+    private Optional<String> downloadFileNameFor(@Nonnull Version version) {
+        return platformSuffix(version)
+            .map(platformSuffix -> {
+                final StringBuilder sb = new StringBuilder();
+                sb.append("hugo_");
+                if (extendedSupported(version)) {
+                    sb.append("extended_");
+                }
+                sb.append(version)
+                    .append("_")
+                    .append(platformSuffix)
+                    .append(packaging().extension());
 
-        return sb.toString();
+                return sb.toString();
+            });
     }
 
     @Nonnull
@@ -175,10 +258,12 @@ public enum Platform {
 
     private static Optional<Platform> detectWindows(@Nonnull Architecture arch) {
         switch (arch) {
-            case x32:
-                return Optional.of(windows_x32);
-            case x64:
-                return Optional.of(windows_x64);
+            case x86:
+                return Optional.of(windows_x86);
+            case amd64:
+                return Optional.of(windows_amd64);
+            case arm32:
+                return Optional.of(windows_arm32);
             case arm64:
                 return Optional.of(windows_arm64);
             default:
@@ -188,10 +273,10 @@ public enum Platform {
 
     private static Optional<Platform> detectLinux(@Nonnull Architecture arch) {
         switch (arch) {
-            case x32:
-                return Optional.of(linux_x32);
-            case x64:
-                return Optional.of(linux_x64);
+            case x86:
+                return Optional.of(linux_x86);
+            case amd64:
+                return Optional.of(linux_amd64);
             case arm64:
                 return Optional.of(linux_arm64);
             default:
@@ -201,8 +286,8 @@ public enum Platform {
 
     private static Optional<Platform> detectMacOs(@Nonnull Architecture arch) {
         switch (arch) {
-            case x64:
-                return Optional.of(macos_x64);
+            case amd64:
+                return Optional.of(macos_amd64);
             case arm64:
                 return Optional.of(macos_arm64);
             default:

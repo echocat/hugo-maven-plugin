@@ -17,7 +17,7 @@
             <plugin>
                 <groupId>org.echocat.maven.plugins</groupId>
                 <artifactId>hugo-maven-plugin</artifactId>
-                <version>0.2.2</version>
+                <version>0.2.19</version>
                 <executions>
                     <execution>
                         <id>build</id>

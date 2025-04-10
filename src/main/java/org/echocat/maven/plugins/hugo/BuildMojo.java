@@ -15,6 +15,7 @@ import org.apache.maven.plugins.annotations.Mojo;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.echocat.maven.plugins.hugo.model.Config;
 import org.echocat.maven.plugins.hugo.model.ConfigAndOutput;
+import org.echocat.maven.plugins.hugo.utils.FailureException;
 
 @Mojo(
     name = "build",
@@ -44,7 +45,7 @@ public class BuildMojo extends BaseBuildMojo {
     }
 
     @Nonnull
-    protected ConfigAndOutput configAndOutput() throws MojoFailureException {
+    protected ConfigAndOutput configAndOutput() throws FailureException {
         return configAndOutputOf(
             config(),
             output()
@@ -52,18 +53,18 @@ public class BuildMojo extends BaseBuildMojo {
     }
 
     @Nonnull
-    protected Config config() throws MojoFailureException {
+    protected Config config() throws FailureException {
         final Path path = ofNullable(config)
             .map(File::toPath)
-            .orElseThrow(() -> new MojoFailureException("config property missing."));
+            .orElseThrow(() -> new FailureException("config property missing."));
         return configOf(path);
     }
 
     @Nonnull
-    protected Path output() throws MojoFailureException {
+    protected Path output() throws FailureException {
         return ofNullable(output)
             .map(File::toPath)
-            .orElseThrow(() -> new MojoFailureException("output property missing."));
+            .orElseThrow(() -> new FailureException("output property missing."));
     }
 
 }

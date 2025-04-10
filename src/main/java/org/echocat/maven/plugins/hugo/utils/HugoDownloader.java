@@ -6,17 +6,16 @@ import static java.nio.file.Files.createTempFile;
 import static java.nio.file.Files.newOutputStream;
 import static org.echocat.maven.plugins.hugo.utils.FileSystems.*;
 
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
+import com.github.zafarkhaja.semver.Version;
 import org.apache.maven.plugin.logging.Log;
 import org.echocat.maven.plugins.hugo.model.Platform;
 
@@ -37,8 +36,10 @@ public final class HugoDownloader {
         platform = builder.platform.orElseThrow(() -> new NullPointerException("No platform provided."));
     }
 
-    public void download(@Nonnull String version, @Nonnull Path to) throws MojoExecutionException, MojoFailureException {
-        final URL from = platform().packageDownloadUrlFor(version);
+    public void download(@Nonnull Version version, @Nonnull Path to) throws UncheckedIOException, FailureException {
+        final URL from = platform().packageDownloadUrlFor(version)
+            .orElseThrow(() -> new FailureException(format("No binary available for combination of version %s and platform %s.", version, platform)));
+
         log().info(format("Downloading hugo %s from %s...", version, from));
 
         final Path packageAsTemporaryFile = downloadToTemporaryFile(from);
@@ -58,7 +59,7 @@ public final class HugoDownloader {
     }
 
     @Nonnull
-    Path downloadToTemporaryFile(@Nonnull URL from) throws MojoExecutionException {
+    Path downloadToTemporaryFile(@Nonnull URL from) throws UncheckedIOException {
         final Path to = newBufferFile();
         try (final InputStream is = startDownloadOf(from);
              final OutputStream fileOutputStream = newOutputStream(to)
@@ -69,42 +70,32 @@ public final class HugoDownloader {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
             }
         } catch (IOException e) {
-            throw new MojoExecutionException(format("Cannot download hugo and save it into %s.", to), e);
+            throw new UncheckedIOException(format("Cannot download hugo and save it into %s.", to), e);
         }
         return to;
     }
 
     @Nonnull
-    Path newBufferFile() throws MojoExecutionException {
+    Path newBufferFile() throws UncheckedIOException {
         try {
             return createTempFile("hugo-maven-plugin.buffered-download.", "");
         } catch (IOException e) {
-            throw new MojoExecutionException("Cannot buffered download file.", e);
+            throw new UncheckedIOException("Cannot buffered download file.", e);
         }
     }
 
     @Nonnull
-    InputStream startDownloadOf(@Nonnull URL url) throws MojoExecutionException {
-        boolean success = false;
+    InputStream startDownloadOf(@Nonnull URL url) throws UncheckedIOException {
         try {
-            final InputStream urlIs = url.openStream();
-            try {
-                final InputStream resultIs = new BufferedInputStream(urlIs);
-                success = true;
-                return resultIs;
-            } finally {
-                if (!success) {
-                    urlIs.close();
-                }
-            }
-        } catch (IOException e) {
-            throw new MojoExecutionException(
+            return Urls.startDownloadOf(url);
+        } catch (UncheckedIOException e) {
+            throw new UncheckedIOException(
                 format(
                     "Cannot download hugo from %s. [os.name: %s, arch.name: %s]",
                     url,
                     getProperty("os.name", "unknown"),
                     getProperty("os.arch", "unknown")
-                ), e);
+                ), e.getCause());
         }
     }
 

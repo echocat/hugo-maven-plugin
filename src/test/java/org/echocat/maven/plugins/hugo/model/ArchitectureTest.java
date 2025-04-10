@@ -15,13 +15,13 @@ public class ArchitectureTest {
 
     @ParameterizedTest
     @CsvSource(value = {
-        "x86,x32",
-        "i386,x32",
-        "i486,x32",
-        "i586,x32",
-        "i686,x32",
-        "amd64,x64",
-        "x86_64,x64",
+        "x86,x86",
+        "i386,x86",
+        "i486,x86",
+        "i586,x86",
+        "i686,x86",
+        "amd64,amd64",
+        "x86_64,amd64",
         "aarch64,arm64",
         "arm64,arm64"
     })

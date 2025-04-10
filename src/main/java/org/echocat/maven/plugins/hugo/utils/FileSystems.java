@@ -8,20 +8,23 @@ import static java.nio.file.attribute.PosixFilePermission.*;
 import static java.util.Collections.unmodifiableSet;
 import static java.util.Objects.requireNonNull;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
+import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import javax.annotation.Nonnull;
 
-import org.apache.maven.plugin.MojoExecutionException;
+public interface FileSystems {
 
-public final class FileSystems {
-
-    public static final Set<PosixFilePermission> EXECUTE_PERMISSIONS = unmodifiableSet(new HashSet<>(Arrays.asList(
+    Set<PosixFilePermission> EXECUTE_PERMISSIONS = unmodifiableSet(new HashSet<>(Arrays.asList(
         OWNER_READ,
         OWNER_WRITE,
         OWNER_EXECUTE,
@@ -31,38 +34,46 @@ public final class FileSystems {
         OTHERS_EXECUTE
     )));
 
-    public static void createParentsOf(@Nonnull Path what) throws MojoExecutionException {
+    static void createParentsOf(@Nonnull Path what) throws UncheckedIOException {
         requireNonNull(what);
 
         createDirectories(what.getParent());
     }
 
-    public static void createDirectories(@Nonnull Path what) throws MojoExecutionException {
+    static void createDirectories(@Nonnull Path what) throws UncheckedIOException {
         requireNonNull(what);
         try {
             Files.createDirectories(what);
         } catch (IOException e) {
-            throw new MojoExecutionException(format("%s exists but is not a directory.", what), e);
+            throw new UncheckedIOException(format("%s exists but is not a directory.", what), e);
         }
     }
 
-    public static void ensureExecutable(@Nonnull Path what) throws MojoExecutionException {
+    static void ensureExecutable(@Nonnull Path what) throws UncheckedIOException {
         try {
             setPosixFilePermissions(what, EXECUTE_PERMISSIONS);
         } catch (UnsupportedOperationException ignored) {
         } catch (IOException e) {
-            throw new MojoExecutionException(format("Cannot make %s executable.", what), e);
+            throw new UncheckedIOException(format("Cannot make %s executable.", what), e);
         }
     }
 
-    public static void rename(@Nonnull Path what, @Nonnull Path to) throws MojoExecutionException {
+    static void rename(@Nonnull Path what, @Nonnull Path to) throws UncheckedIOException {
         try {
             move(what, to, ATOMIC_MOVE);
         } catch (IOException e) {
-            throw new MojoExecutionException(format("Cannot rename %s to %s.", what, to), e);
+            throw new UncheckedIOException(format("Cannot rename %s to %s.", what, to), e);
         }
     }
 
-    private FileSystems() {}
-
+    @Nonnull
+    static Optional<FileTime> lastModifiedAt(@Nonnull Path what) throws UncheckedIOException {
+        try {
+            return Optional.of(Files.getLastModifiedTime(what));
+        } catch (FileNotFoundException | NoSuchFileException e) {
+            return Optional.empty();
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 }

@@ -11,6 +11,7 @@ import static org.echocat.maven.plugins.hugo.utils.InputStreamLogger.Level.info;
 import static org.echocat.maven.plugins.hugo.utils.ProcessLogger.processLogger;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -18,8 +19,7 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import org.apache.maven.plugin.MojoExecutionException;
-import org.apache.maven.plugin.MojoFailureException;
+import com.github.zafarkhaja.semver.Version;
 import org.apache.maven.plugin.logging.Log;
 import org.echocat.maven.plugins.hugo.model.Platform;
 
@@ -35,7 +35,7 @@ public final class Hugo {
     @Nonnull
     private final Platform platform;
     @Nonnull
-    private final String version;
+    private final Version version;
     @Nonnull
     private final Download download;
 
@@ -52,7 +52,7 @@ public final class Hugo {
             .build();
     }
 
-    public void execute(@Nonnull List<String> arguments, @Nonnull Path inWorkingDirectory) throws MojoFailureException, MojoExecutionException {
+    public void execute(@Nonnull List<String> arguments, @Nonnull Path inWorkingDirectory) throws UncheckedIOException, FailureException {
         final Process process = start(arguments, inWorkingDirectory);
         final ProcessLogger processLogger = processLoggerFor(process);
         try {
@@ -60,12 +60,12 @@ public final class Hugo {
             assertNormalExitOf(process);
             processLogger.waitFor();
         } catch (InterruptedException e) {
-            throw new MojoExecutionException("Was interrupted.", e);
+            throw new RuntimeException("Was interrupted.", e);
         }
     }
 
     @Nonnull
-    private Process start(@Nonnull List<String> arguments, @Nonnull Path inWorkingDirectory) throws MojoFailureException, MojoExecutionException {
+    private Process start(@Nonnull List<String> arguments, @Nonnull Path inWorkingDirectory) throws UncheckedIOException, FailureException {
         final Process process;
         try {
             process = new ProcessBuilder()
@@ -75,13 +75,13 @@ public final class Hugo {
                 .redirectOutput(PIPE)
                 .start();
         } catch (IOException e) {
-            throw new MojoExecutionException("Cannot start hugo process.", e);
+            throw new UncheckedIOException("Cannot start hugo process.", e);
         }
         return process;
     }
 
     @Nonnull
-    List<String> toCommand(@Nonnull List<String> arguments) throws MojoFailureException, MojoExecutionException {
+    List<String> toCommand(@Nonnull List<String> arguments) throws UncheckedIOException, FailureException {
         final List<String> result = new ArrayList<>(arguments.size() + 1);
         result.add(executable().toString());
         result.addAll(arguments);
@@ -99,15 +99,21 @@ public final class Hugo {
             .build();
     }
 
-    void assertNormalExitOf(@Nonnull Process process) throws MojoFailureException {
+    void assertNormalExitOf(@Nonnull Process process) throws FailureException {
         final int value = process.exitValue();
         if (value != 0) {
-            throw new MojoFailureException(format("Execution of hugo failed with %d. See output above.", value));
+            throw new FailureException(format("Execution of hugo failed with %d. See output above.", value));
+        }
+    }
+
+    public static class NoHugoInstalledException extends FailureException {
+        public NoHugoInstalledException() {
+            super("hugo is not available but should also never be downloaded.");
         }
     }
 
     @Nonnull
-    Path executable() throws MojoFailureException, MojoExecutionException {
+    Path executable() throws UncheckedIOException, FailureException {
         final Path result = platform().hugoExecutable(version());
         final Download download = download();
 
@@ -116,7 +122,7 @@ public final class Hugo {
         }
 
         if (download == never) {
-            throw new MojoFailureException("hugo is not available but should also never be downloaded.");
+            throw new NoHugoInstalledException();
         }
 
         downloader.download(version(), result);
@@ -135,7 +141,7 @@ public final class Hugo {
     }
 
     @Nonnull
-    public String version() {
+    public Version version() {
         return version;
     }
 
@@ -151,7 +157,7 @@ public final class Hugo {
         @Nonnull
         private Optional<Platform> platform = Optional.empty();
         @Nonnull
-        private Optional<String> version = Optional.empty();
+        private Optional<Version> version = Optional.empty();
         @Nonnull
         private Optional<Download> download = Optional.empty();
 
@@ -168,7 +174,7 @@ public final class Hugo {
         }
 
         @Nonnull
-        public Builder withVersion(@Nonnull String v) {
+        public Builder withVersion(@Nonnull Version v) {
             version = Optional.of(v);
             return this;
         }

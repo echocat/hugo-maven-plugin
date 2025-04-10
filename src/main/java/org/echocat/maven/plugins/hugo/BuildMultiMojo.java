@@ -9,6 +9,7 @@ import static org.echocat.maven.plugins.hugo.model.ConfigAndOutput.configAndOutp
 
 import java.io.File;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -26,6 +27,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 import org.codehaus.plexus.util.SelectorUtils;
 import org.echocat.maven.plugins.hugo.model.Config;
 import org.echocat.maven.plugins.hugo.model.ConfigAndOutput;
+import org.echocat.maven.plugins.hugo.utils.FailureException;
 
 @Mojo(
     name = "build-multi",
@@ -70,7 +72,7 @@ public class BuildMultiMojo extends BaseBuildMojo {
     }
 
     @Nonnull
-    protected List<ConfigAndOutput> configAndOutputs() throws MojoFailureException, MojoExecutionException {
+    protected List<ConfigAndOutput> configAndOutputs() throws FailureException {
         final List<Config> configs = configs();
 
         final List<ConfigAndOutput> result = new ArrayList<>(configs.size());
@@ -81,7 +83,7 @@ public class BuildMultiMojo extends BaseBuildMojo {
     }
 
     @Nonnull
-    protected List<Config> configs() throws MojoFailureException, MojoExecutionException {
+    protected List<Config> configs() throws FailureException {
         final List<Path> paths = configPaths();
 
         final List<Config> result = new ArrayList<>(paths.size());
@@ -93,14 +95,14 @@ public class BuildMultiMojo extends BaseBuildMojo {
     }
 
     @Nonnull
-    protected List<Path> configPaths() throws MojoFailureException, MojoExecutionException {
+    protected List<Path> configPaths() throws UncheckedIOException, FailureException {
         final Path configBase = configBase();
         try (final Stream<Path> candidates = Files.list(configBase)) {
             return unmodifiableList(candidates
                 .filter(this::allowedConfig)
                 .collect(Collectors.toList()));
         } catch (IOException e) {
-            throw new MojoExecutionException(format("Cannot collect potential config paths from %s", configBase));
+            throw new RuntimeException(format("Cannot collect potential config paths from %s", configBase), e);
         }
     }
 
@@ -123,7 +125,7 @@ public class BuildMultiMojo extends BaseBuildMojo {
     }
 
     @Nonnull
-    protected ConfigAndOutput configAndOutputFor(@Nonnull Config config) throws MojoFailureException {
+    protected ConfigAndOutput configAndOutputFor(@Nonnull Config config) throws FailureException {
         return configAndOutputOf(
             config,
             outputBase().resolve(config.name())
@@ -147,17 +149,17 @@ public class BuildMultiMojo extends BaseBuildMojo {
     }
 
     @Nonnull
-    protected Path configBase() throws MojoFailureException {
+    protected Path configBase() throws FailureException {
         return ofNullable(configBase)
             .map(File::toPath)
-            .orElseThrow(() -> new MojoFailureException("configBase property missing."));
+            .orElseThrow(() -> new FailureException("configBase property missing."));
     }
 
     @Nonnull
-    protected Path outputBase() throws MojoFailureException {
+    protected Path outputBase() throws FailureException {
         return ofNullable(outputBase)
             .map(File::toPath)
-            .orElseThrow(() -> new MojoFailureException("outputBase property missing."));
+            .orElseThrow(() -> new FailureException("outputBase property missing."));
     }
 
 }

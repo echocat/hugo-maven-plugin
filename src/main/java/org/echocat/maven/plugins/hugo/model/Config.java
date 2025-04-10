@@ -11,12 +11,12 @@ import java.nio.file.Path;
 import java.util.Objects;
 import javax.annotation.Nonnull;
 
-import org.apache.maven.plugin.MojoFailureException;
+import org.echocat.maven.plugins.hugo.utils.FailureException;
 
 public final class Config {
 
     @Nonnull
-    public static Config configOf(@Nonnull Path path) throws MojoFailureException {
+    public static Config configOf(@Nonnull Path path) throws FailureException {
         requireNonNull(path);
         return new Config(path);
     }
@@ -28,12 +28,12 @@ public final class Config {
     @Nonnull
     private final String name;
 
-    private Config(@Nonnull Path path) throws MojoFailureException {
+    private Config(@Nonnull Path path) throws FailureException {
         this.path = requireNonNull(path);
         final String fileName = this.path.getFileName().toString();
 
         if (!exists(this.path)) {
-            throw new MojoFailureException(format("Configuration %s does not exist.", this.path));
+            throw new FailureException(format("Configuration %s does not exist.", this.path));
         } else if (isDirectory(this.path)) {
             this.type = directory;
             this.name = fileName;
@@ -41,7 +41,7 @@ public final class Config {
             this.type = file;
             this.name = getBaseName(fileName); // Without extension
         } else {
-            throw new MojoFailureException(format("Configuration %s is neither a directory nor regular file.", this.path));
+            throw new FailureException(format("Configuration %s is neither a directory nor regular file.", this.path));
         }
     }
 

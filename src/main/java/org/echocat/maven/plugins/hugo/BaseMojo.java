@@ -1,32 +1,38 @@
 package org.echocat.maven.plugins.hugo;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.Optional.ofNullable;
-import static org.echocat.maven.plugins.hugo.utils.Hugo.Download.onDemand;
 import static org.echocat.maven.plugins.hugo.model.Platform.platform;
+import static org.echocat.maven.plugins.hugo.utils.Hugo.Download.onDemand;
+import static org.echocat.maven.plugins.hugo.utils.HugoVersionRetriever.hugoVersionRetriever;
 
 import java.io.File;
 import java.nio.file.Path;
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import com.github.zafarkhaja.semver.Version;
 import org.apache.maven.model.Resource;
 import org.apache.maven.plugin.AbstractMojo;
-import org.apache.maven.plugin.MojoFailureException;
 import org.apache.maven.plugin.logging.Log;
 import org.apache.maven.plugins.annotations.Parameter;
 import org.apache.maven.project.MavenProject;
+import org.echocat.maven.plugins.hugo.utils.FailureException;
 import org.echocat.maven.plugins.hugo.utils.Hugo;
 import org.echocat.maven.plugins.hugo.utils.Hugo.Download;
+import org.echocat.maven.plugins.hugo.utils.HugoVersionRetriever;
+import org.echocat.maven.plugins.hugo.utils.HugoVersionRetriever.Builder;
 
 public abstract class BaseMojo extends AbstractMojo {
 
-    private static final String DEFAULT_VERSION = "0.88.1";
+    private static final String LATEST_VERSION = "latest";
 
     @Parameter(
         defaultValue = "${project}",
@@ -37,7 +43,7 @@ public abstract class BaseMojo extends AbstractMojo {
     @Parameter(
         name = "version",
         property = "hugo.version",
-        defaultValue = DEFAULT_VERSION
+        defaultValue = LATEST_VERSION
     )
     private String version;
 
@@ -76,8 +82,20 @@ public abstract class BaseMojo extends AbstractMojo {
     )
     private String environment;
 
+    @Parameter(
+        name = "latestVersionCacheDuration",
+        property = "hugo.latestVersionCacheDuration"
+    )
+    private String latestVersionCacheDuration;
+
+    @Parameter(
+        name = "latestVersionCacheFile",
+        property = "hugo.latestVersionCacheFile"
+    )
+    private File latestVersionCacheFile;
+
     @Nonnull
-    protected Hugo hugo() throws MojoFailureException {
+    protected Hugo hugo() throws FailureException {
         return Hugo.hugo()
             .withLog(log())
             .withVersion(version())
@@ -93,15 +111,41 @@ public abstract class BaseMojo extends AbstractMojo {
     }
 
     @Nonnull
-    protected Log log() throws MojoFailureException {
+    protected Log log() throws FailureException {
         return ofNullable(getLog())
-            .orElseThrow(() -> new MojoFailureException("No log available."));
+            .orElseThrow(() -> new FailureException("No log available."));
     }
 
     @Nonnull
-    protected String version() {
-        return ofNullable(version)
-            .orElse(DEFAULT_VERSION);
+    protected Version version() throws FailureException {
+        String plain = Optional.ofNullable(this.version)
+            .map(String::trim)
+            .filter(v -> !v.isEmpty())
+            .orElse(LATEST_VERSION);
+
+        if (LATEST_VERSION.equalsIgnoreCase(plain)) {
+            return versionRetriever().latest();
+        }
+
+        try {
+            return Version.parse(plain);
+        } catch (IllegalArgumentException ignored) {
+            throw new FailureException(format("Hugo version '%s' is not a valid semantic version.", plain));
+        }
+    }
+
+    @Nonnull
+    protected HugoVersionRetriever versionRetriever() throws FailureException {
+        final Builder builder = hugoVersionRetriever()
+            .withLog(log());
+        if (latestVersionCacheDuration != null && !latestVersionCacheDuration.isEmpty()) {
+            builder.withLatestCacheDuration(Duration.parse(latestVersionCacheDuration));
+        }
+        if (latestVersionCacheFile != null) {
+            builder.withLatestCacheFile(latestVersionCacheFile.toPath());
+        }
+
+        return builder.build();
     }
 
     @Nonnull
@@ -111,12 +155,11 @@ public abstract class BaseMojo extends AbstractMojo {
     }
 
     @Nonnull
-    protected Path workingDirectory() throws MojoFailureException {
+    protected Path workingDirectory() throws FailureException {
         return ofNullable(workingDirectory)
             .map(File::toPath)
-            .orElseThrow(() -> new MojoFailureException("workingDirectory property missing."));
+            .orElseThrow(() -> new FailureException("workingDirectory property missing."));
     }
-
 
     @Nonnull
     protected List<String> arguments(@Nullable String... args) {

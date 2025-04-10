@@ -11,8 +11,8 @@ import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 
 public enum Architecture {
-    x64("^(x8664|amd64|ia32e|em64t|x64)$"),
-    x32("^(x8632|x86|i[3-6]86|ia32|x32)$"),
+    amd64("^(x8664|amd64|ia32e|em64t|x64)$"),
+    x86("^(x8632|x86|i[3-6]86|ia32|x32)$"),
     arm32("^(arm|arm32)$"),
     arm64("^(aarch64|arm64)$"),
     ;
